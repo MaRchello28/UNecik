@@ -7,10 +7,10 @@ class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(DoubleConv, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 1, 1, 1, bias=False),
+            nn.Conv2d(in_channels, out_channels, 3, 1, 1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, 1, 1, 1, bias=False),
+            nn.Conv2d(out_channels, out_channels, 3, 1, 1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
         )
@@ -20,7 +20,7 @@ class DoubleConv(nn.Module):
 
 class UNET(nn.Module):
     def __init__(
-            self, in_channels=3, out_channels=1, features=[64, 128, 256, 512],
+            self, in_channels=1, out_channels=1, features=[64, 128, 256, 512],
     ):
         super(UNET, self).__init__()
         self.ups = nn.ModuleList()
@@ -34,14 +34,8 @@ class UNET(nn.Module):
 
         # Up part of UNET
         for feature in reversed(features):
-            self.ups.append(
-                nn.ConvTranspose2d(
-                    feature*2, feature, kernel_size=2, stride=2,
-                )
-            )
-            self.ups.append(
-                nn.ConvTranspose2d(feature*2, feature, kernel_size=2, stride=2, padding=1)
-            )
+            self.ups.append(nn.ConvTranspose2d(feature*2, feature, kernel_size=2, stride=2))
+            self.ups.append(DoubleConv(feature*2, feature))
 
         self.bottleneck = DoubleConv(features[-1], features[-1]*2)
         self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1)
@@ -70,9 +64,11 @@ class UNET(nn.Module):
         return self.final_conv(x)
 
 def test():
-    x = torch.randn((3, 1, 161, 161))
+    x = torch.randn((3, 1, 160, 160))
     model = UNET(in_channels=1, out_channels=1)
     preds = model(x)
+    print(preds.shape)
+    print(x.shape)
     assert preds.shape == x.shape
 
 if __name__ == "__main__":
