@@ -13,16 +13,15 @@ from utils import (
     save_predictions_as_imgs,
 )
 
-# Hyperparameters
 LEARNING_RATE = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 4
-NUM_EPOCHS = 3
+NUM_EPOCHS = 10
 NUM_WORKERS = 2
 IMAGE_HEIGHT = 512
 IMAGE_WIDTH = 512
 PIN_MEMORY = True
-LOAD_MODEL = False  # Poprawione z LOAD_MEMORY
+LOAD_MODEL = False
 
 TRAIN_IMG_DIR = "data/train_images"
 TRAIN_MASK_DIR = "data/train_masks"
