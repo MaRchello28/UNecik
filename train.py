@@ -86,7 +86,11 @@ def main():
     if LOAD_MODEL:
         load_checkpoint(torch.load("my_checkpoint.pth.tar"), model)
 
-    check_accuracy(val_loader, model, device=DEVICE)
+    try:
+        check_accuracy(val_loader, model, device=DEVICE)
+    except Exception as e:
+        raise e
+
     scaler = torch.cuda.amp.GradScaler()
 
     for epoch in range(NUM_EPOCHS):
