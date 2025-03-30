@@ -64,6 +64,7 @@ def check_accuracy(loader, model, device="cuda"):
             y = y.to(device).unsqueeze(1)
             preds = torch.sigmoid(model(x))
             preds = (preds > 0.5).float()
+            print(f"Preds shape: {preds.shape}, Targets shape: {y.shape}")
             num_correct += (preds == y).sum()
             num_pixels += torch.numel(preds)
             dice_score += (2 * (preds * y).sum()) / (
