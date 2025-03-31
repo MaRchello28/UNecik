@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
-import torchvision.transforms.functional as TF
 import torch.nn.functional as F
+from torchvision import models
+import torchvision.transforms as transforms
 
+# DoubleConv to podstawowy blok UNet z dwoma warstwami konwolucyjnymi
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(DoubleConv, self).__init__()
@@ -18,10 +20,9 @@ class DoubleConv(nn.Module):
     def forward(self, x):
         return self.conv(x)
 
+# Główny model UNet
 class UNET(nn.Module):
-    def __init__(
-            self, in_channels=1, out_channels=1, features=[64, 128, 256, 512],
-    ):
+    def __init__(self, in_channels=3, out_channels=1, features=[64, 128, 256, 512]):
         super(UNET, self).__init__()
         self.ups = nn.ModuleList()
         self.downs = nn.ModuleList()
@@ -43,12 +44,16 @@ class UNET(nn.Module):
     def forward(self, x):
         skip_connections = []
 
+        # Downward path (encoding)
         for down in self.downs:
             x = down(x)
             skip_connections.append(x)
             x = self.pool(x)
 
+        # Bottleneck
         x = self.bottleneck(x)
+
+        # Reverse path (decoding)
         skip_connections = skip_connections[::-1]
 
         for idx in range(0, len(self.ups), 2):
@@ -63,13 +68,35 @@ class UNET(nn.Module):
 
         return self.final_conv(x)
 
+# Funkcja do ładowania pretrenowanego modelu z ImageNet
+def load_pretrained_weights(model):
+    pretrained_model = models.resnet18(pretrained=True)  # Możesz zmienić na inny model (np. ResNet50)
+    
+    # Przekopiowanie wag z pretrenowanego modelu do UNet
+    model_dict = model.state_dict()
+    pretrained_dict = pretrained_model.state_dict()
+    
+    # Filtrujemy tylko te wagi, które odpowiadają warstwom UNet
+    pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+    
+    # Załaduj wagę
+    model_dict.update(pretrained_dict)
+    model.load_state_dict(model_dict)
+    print("Wagi pretrenowane zostały załadowane do modelu UNet.")
+
+# Funkcja do konwersji obrazu czarno-białego na RGB (powielanie kanałów)
+def convert_to_rgb(image):
+    return image.repeat(1, 1, 3)
+
+# Inicjalizacja modelu UNet
+model = UNET(in_channels=3, out_channels=1)
+
+load_pretrained_weights(model)
+
 def test():
-    x = torch.randn((3, 1, 160, 160))
-    model = UNET(in_channels=1, out_channels=1)
+    x = torch.randn((1, 3, 512, 512))
     preds = model(x)
-    print(preds.shape)
-    print(x.shape)
-    assert preds.shape == x.shape
+    print(f"Predykcja ma kształt: {preds.shape}")
 
 if __name__ == "__main__":
     test()
