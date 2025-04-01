@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from model import UNET
-from utils import load_checkpoint, get_loaders
+from utils import load_checkpoint, get_loaders, save_predictions_as_imgs
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from tqdm import tqdm
@@ -90,6 +90,8 @@ def main():
 
     # Ewaluacja
     evaluate_model(eval_loader, model)
+
+    save_predictions_as_imgs(eval_loader, model, folder="saved_images_validation/", device=DEVICE)
 
 if __name__ == "__main__":
     main()
